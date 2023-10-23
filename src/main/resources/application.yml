@@ -1,0 +1,64 @@
+server:
+  port: 8083
+  servlet:
+    context-path: /order
+
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 1
+    lease-expiration-duration-in-seconds: 2
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+      healthcheck:
+        enabled: true
+      lease:
+        duration: 5
+
+  management:
+  endpoints:
+    web:
+      exposure:
+        include:*
+
+spring:
+  application:
+    name: order-service
+    cloud:
+        gateway:
+          routes[0].id:order-service
+          routes[0].uri:lb://ORDER-SERVICE
+          routes[0].predicates[0]:Path=/order/
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+
+logging:
+  file:
+    name: D:/myLogs/order.log
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      orderService:
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 10
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        slidingWindowType: count_based
+
